@@ -11,10 +11,10 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(helmet());
+app.use(helmet());// adds security-related HTTP headers to the responses
 app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
-
+ 
 // Test route
 app.get("/api/health", (req, res) => {
   res.json({
