@@ -8,6 +8,12 @@ dist/
 # Environment variables and secrets
 .env
 .env.*
+!.env.example
+
+# SQLite database files
+*.db
+*.sqlite
+*.sqlite3
 
 # Logs
 *.log
