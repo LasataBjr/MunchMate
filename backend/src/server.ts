@@ -4,6 +4,9 @@ import cors from "cors";
 import helmet from "helmet";
 import { env } from "./config/env.js";
 import { db } from "./database/connection.js";
+import cookieParser from "cookie-parser";
+
+import authRoutes from "./routes/auth.routes.js";
 
 
 // Create Express application
@@ -12,10 +15,13 @@ const result = db.prepare("SELECT 1 AS connection_test").get();
 console.log("Database connection test result:", result);
 
 // Middleware
-app.use(helmet());// adds security-related HTTP headers to the responses
-app.use(cors({ origin: "http://localhost:5173" }));
-app.use(express.json());
- 
+app.use(helmet());// adds security-related HTTP headers to the responses 
+app.use(cors({ origin: "http://localhost:5173" , credentials: true, })); 
+app.use(express.json()); // Parse JSON bodies from incoming requests
+app.use(cookieParser()); // Parse cookies from incoming requests
+
+app.use("/api/auth", authRoutes);
+
 // Test route
 app.get("/api/health", (req, res) => {
   res.json({
@@ -23,7 +29,6 @@ app.get("/api/health", (req, res) => {
     message: "MunchMate API is running!",
   });
 });
-
 
 
 const tables = db.prepare(`SELECT name FROM sqlite_master WHERE type = 'table'`).all();

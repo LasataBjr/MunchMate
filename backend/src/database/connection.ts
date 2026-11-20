@@ -10,11 +10,7 @@ const currentFile = fileURLToPath(import.meta.url);
 const currentDirectory = path.dirname(currentFile);
 
 // Resolve the database path from the backend folder
-const databasePath = path.resolve(
-  currentDirectory,
-  "../../",
-  env.DB_PATH
-);
+const databasePath = path.resolve( currentDirectory, "../../", env.DB_PATH );
 
 // Create the database directory if it doesn't exist
 import fs from "node:fs";
