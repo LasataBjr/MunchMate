@@ -4,7 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import { env } from "./config/env.js";
 import { db } from "./database/connection.js";
-import { initializeDatabase } from "./database/init.js";
+
 
 // Create Express application
 const app = express();
@@ -24,7 +24,7 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-initializeDatabase();
+
 
 const tables = db.prepare(`SELECT name FROM sqlite_master WHERE type = 'table'`).all();
 console.log("Database tables:", tables);
