@@ -7,7 +7,7 @@ import { db } from "./database/connection.js";
 import cookieParser from "cookie-parser";
 
 import authRoutes from "./routes/auth.routes.js";
-
+import machineRoutes from "./routes/machine.routes.js";
 
 // Create Express application
 const app = express();
@@ -21,6 +21,7 @@ app.use(express.json()); // Parse JSON bodies from incoming requests
 app.use(cookieParser()); // Parse cookies from incoming requests
 
 app.use("/api/auth", authRoutes);
+app.use("/api/machines", machineRoutes);
 
 // Test route
 app.get("/api/health", (req, res) => {

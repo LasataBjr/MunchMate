@@ -87,12 +87,8 @@ CREATE TABLE machine_models (
     base_price_paisa INTEGER NOT NULL
         CHECK (base_price_paisa >= 0),
 
-    currency TEXT NOT NULL DEFAULT 'NPR'
-        CHECK (currency = 'NPR'),
-
-    is_active INTEGER NOT NULL DEFAULT 1
-        CHECK (is_active IN (0, 1)),
-
+    currency TEXT NOT NULL DEFAULT 'NPR' CHECK (currency = 'NPR'),
+    is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -106,12 +102,9 @@ CREATE TABLE machine_models (
 CREATE TABLE machine_images (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     machine_model_id INTEGER NOT NULL,
-
     image_path TEXT NOT NULL,
-
     is_primary INTEGER NOT NULL DEFAULT 0
         CHECK (is_primary IN (0, 1)),
-
     display_order INTEGER NOT NULL DEFAULT 0
         CHECK (display_order >= 0),
 
@@ -135,7 +128,6 @@ CREATE TABLE enquiries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     customer_id INTEGER NOT NULL,
     enquiry_number TEXT NOT NULL UNIQUE,
-
     status TEXT NOT NULL DEFAULT 'new'
         CHECK (status IN (
             'new',
@@ -144,7 +136,6 @@ CREATE TABLE enquiries (
             'converted',
             'cancelled'
         )),
-
     message TEXT,
     assigned_to INTEGER,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -183,9 +174,7 @@ CREATE TABLE quotations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     enquiry_id INTEGER NOT NULL,
     quotation_number TEXT NOT NULL UNIQUE,
-    version_number INTEGER NOT NULL
-        CHECK (version_number > 0),
-
+    version_number INTEGER NOT NULL CHECK (version_number > 0),
     status TEXT NOT NULL DEFAULT 'draft'
         CHECK (status IN (
             'draft',
@@ -204,12 +193,10 @@ CREATE TABLE quotations (
             total_amount_paisa = subtotal_paisa - discount_paisa + tax_amount_paisa
             AND total_amount_paisa >= 0
         ),
-
     valid_until TEXT,
     terms TEXT,
     created_by INTEGER NOT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
     UNIQUE (enquiry_id, version_number),
 
     FOREIGN KEY (enquiry_id)
@@ -376,8 +363,7 @@ CREATE TABLE warehouses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     address TEXT NOT NULL,
-    is_active INTEGER NOT NULL DEFAULT 1
-        CHECK (is_active IN (0, 1)),
+    is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -443,9 +429,7 @@ WHERE status = 'active';
 -- inventory_movements provides a history of what happened to each machine
 CREATE TABLE inventory_movements (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-
     machine_inventory_id INTEGER NOT NULL,
-
     movement_type TEXT NOT NULL
         CHECK (movement_type IN (
             'received',
@@ -455,13 +439,10 @@ CREATE TABLE inventory_movements (
             'returned',
             'adjustment'
         )),
-
     reference_type TEXT,
     reference_id INTEGER,
-
     notes TEXT,
     created_by INTEGER,
-
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (machine_inventory_id)
@@ -481,11 +462,8 @@ CREATE TABLE inventory_movements (
 
 CREATE TABLE deliveries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-
     order_id INTEGER NOT NULL,
-
     delivery_number TEXT NOT NULL UNIQUE,
-
     status TEXT NOT NULL DEFAULT 'pending'
         CHECK (status IN (
             'pending',
@@ -502,14 +480,10 @@ CREATE TABLE deliveries (
     district TEXT,
     province TEXT,
     country TEXT NOT NULL,
-
     tracking_reference TEXT,
-
     scheduled_at TEXT,
     delivered_at TEXT,
-
     notes TEXT,
-
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (order_id)
@@ -520,7 +494,6 @@ CREATE TABLE deliveries (
 
 CREATE TABLE delivery_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-
     delivery_id INTEGER NOT NULL,
     reservation_id INTEGER NOT NULL UNIQUE,
 
@@ -537,10 +510,8 @@ CREATE TABLE delivery_items (
 
 CREATE TABLE installations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-
     order_id INTEGER NOT NULL,
     delivery_id INTEGER,
-
     status TEXT NOT NULL DEFAULT 'pending'
         CHECK (status IN (
             'pending',
@@ -556,13 +527,10 @@ CREATE TABLE installations (
     district TEXT,
     province TEXT,
     country TEXT,
-
     scheduled_at TEXT,
     completed_at TEXT,
-
     assigned_to INTEGER,
     notes TEXT,
-
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (order_id)
@@ -583,7 +551,6 @@ CREATE TABLE installations (
 
 CREATE TABLE installation_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-
     installation_id INTEGER NOT NULL,
     reservation_id INTEGER NOT NULL UNIQUE,
 
