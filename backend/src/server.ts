@@ -9,6 +9,7 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes.js";
 import machineRoutes from "./routes/machine.routes.js";
 import enquiryRoutes from "./routes/enquiry.routes.js";
+import quotationRoutes from "./routes/quotation.routes.js";
 
 // Create Express application
 const app = express();
@@ -24,6 +25,7 @@ app.use(cookieParser()); // Parse cookies from incoming requests
 app.use("/api/auth", authRoutes);
 app.use("/api/machines", machineRoutes);
 app.use("/api/enquiries", enquiryRoutes);
+app.use("/api/quotations", quotationRoutes);
 
 // Test route
 app.get("/api/health", (req, res) => {
