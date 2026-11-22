@@ -10,6 +10,7 @@ import authRoutes from "./routes/auth.routes.js";
 import machineRoutes from "./routes/machine.routes.js";
 import enquiryRoutes from "./routes/enquiry.routes.js";
 import quotationRoutes from "./routes/quotation.routes.js";
+import orderRoutes from "./routes/order.routes.js";
 
 // Create Express application
 const app = express();
@@ -26,6 +27,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/machines", machineRoutes);
 app.use("/api/enquiries", enquiryRoutes);
 app.use("/api/quotations", quotationRoutes);
+app.use("/api/orders", orderRoutes);
 
 // Test route
 app.get("/api/health", (req, res) => {

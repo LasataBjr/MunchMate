@@ -30,6 +30,15 @@ function generateQuotationNumber(): string {
   return `QUO-${date}-${suffix}`;
 }
 
+// Generate a unique order reference
+function generateOrderNumber(): string {
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+
+  const suffix = randomBytes(4).toString("hex").toUpperCase();
+
+  return `ORD-${date}-${suffix}`;
+}
+
 // Create a quotation and all its items atomically.
 export function createQuotation(
   input: CreateQuotationInput,
@@ -562,21 +571,33 @@ export function getMyQuotationById(id: number, customerId: number) {
 }
 
 // Customer accepts or rejects the entire quotation
-export function decideQuotation(
-  id: number,
-  customerId: number,
-  decision: "accepted" | "rejected"
-) {
+export function decideQuotation(id: number, customerId: number, decision: "accepted" | "rejected") {
   const decisionTransaction = db.transaction(() => {
     const quotation = db.prepare(`
-      SELECT q.id, q.status FROM quotations q
+      SELECT
+        q.id,
+        q.status,
+        q.subtotal_paisa,
+        q.discount_paisa,
+        q.tax_amount_paisa,
+        q.total_amount_paisa,
+        e.customer_id
+      FROM quotations q
       INNER JOIN enquiries e ON e.id = q.enquiry_id
       WHERE q.id = ? AND e.customer_id = ?
     `).get(id, customerId) as
-      | { id: number; status: string }
+      | {
+          id: number;
+          status: string;
+          subtotal_paisa: number;
+          discount_paisa: number;
+          tax_amount_paisa: number;
+          total_amount_paisa: number;
+          customer_id: number;
+        }
       | undefined;
 
-    // Do not reveal whether another customer's quotation exists
+    // Do not reveal whether another customer's quotation exists.
     if (!quotation) {
       throw new QuotationServiceError(
         "QUOTATION_NOT_FOUND",
@@ -591,6 +612,71 @@ export function decideQuotation(
       );
     }
 
+    if (decision === "accepted") {
+      const existingOrder = db.prepare(`
+        SELECT id
+        FROM orders
+        WHERE quotation_id = ?
+      `).get(id);
+
+      if (existingOrder) {
+        throw new QuotationServiceError(
+          "INVALID_STATUS_TRANSITION",
+          "An order already exists for this quotation"
+        );
+      }
+
+      // Create the order using the accepted quotation's saved totals.
+      const orderNumber = generateOrderNumber();
+
+      const orderResult = db.prepare(`
+        INSERT INTO orders (
+          customer_id,
+          quotation_id,
+          order_number,
+          subtotal_paisa,
+          discount_paisa,
+          tax_amount_paisa,
+          total_amount_paisa
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        quotation.customer_id,
+        quotation.id,
+        orderNumber,
+        quotation.subtotal_paisa,
+        quotation.discount_paisa,
+        quotation.tax_amount_paisa,
+        quotation.total_amount_paisa
+      );
+
+      const orderId = Number(orderResult.lastInsertRowid);
+
+      // Copy the quotation items into the new order.
+      db.prepare(`
+        INSERT INTO order_items (
+          order_id,
+          quotation_item_id,
+          machine_model_id,
+          description,
+          quantity,
+          unit_price_paisa,
+          line_total_paisa
+        )
+        SELECT
+          ?,
+          qi.id,
+          qi.machine_model_id,
+          qi.description,
+          qi.quantity,
+          qi.unit_price_paisa,
+          qi.line_total_paisa
+        FROM quotation_items qi
+        WHERE qi.quotation_id = ?
+      `).run(orderId, quotation.id);
+    }
+
+    // Record the customer's decision.
     const result = db.prepare(`
       UPDATE quotations
       SET status = ?
