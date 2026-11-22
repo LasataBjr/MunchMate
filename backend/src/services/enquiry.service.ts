@@ -13,7 +13,7 @@ function generateEnquiryNumber(): string {
 }
 
 // Creates a customer, enquiry and all enquiry items in one transaction.
-export function createEnquiry(input: CreateEnquiryInput) {
+export function createEnquiry(input: CreateEnquiryInput, customerId: number) {
   const createEnquiryTransaction = db.transaction(
     (data: CreateEnquiryInput) => {
       // Check that every requested machine exists and is active.
@@ -27,50 +27,11 @@ export function createEnquiry(input: CreateEnquiryInput) {
         }
       }
 
-      // Look for an existing customer using exact identity details.
-      const matchingCustomers = db.prepare(`
-        SELECT id
-        FROM customers
-        WHERE customer_type = ?
-          AND name = ?
-          AND phone = ?
-          AND COALESCE(company_name, '') = COALESCE(?, '')
-      `).all(
-        data.customer.customer_type,
-        data.customer.name,
-        data.customer.phone,
-        data.customer.company_name ?? null
-      ) as { id: number }[];
-
-      let customerId: number;
-
-      if (matchingCustomers.length === 1) {
-        // Reuse an unambiguous existing customer.
-        customerId = matchingCustomers[0].id;
-      } else {
-        // Create a new customer if no unique match exists.
-        const customerResult = db.prepare(`
-          INSERT INTO customers (customer_type, name, company_name, email, phone)
-          VALUES (?, ?, ?, ?, ?)
-        `).run(
-          data.customer.customer_type,
-          data.customer.name,
-          data.customer.company_name ?? null,
-          data.customer.email ?? null,
-          data.customer.phone
-        );
-
-        customerId = Number(customerResult.lastInsertRowid);
-      }
-
       // Generate the enquiry number.
       const enquiryNumber = generateEnquiryNumber();
 
       // Create the main enquiry record.
-      const enquiryResult = db.prepare(`
-        INSERT INTO enquiries (customer_id, enquiry_number, message)
-        VALUES (?, ?, ?)
-      `).run(
+      const enquiryResult = db.prepare(`INSERT INTO enquiries (customer_id, enquiry_number, message) VALUES (?, ?, ?)`).run(
         customerId,
         enquiryNumber,
         data.message ?? null
@@ -216,6 +177,47 @@ export function getEnquiryById(id: number) {
   };
 }
 
+
+// Returns one enquiry only if it belongs to the specified customer.
+export function getMyEnquiryById(id: number, customerId: number) {
+  const enquiry = db.prepare(`
+    SELECT
+      e.id,
+      e.enquiry_number,
+      e.status,
+      e.message,
+      e.created_at,
+      e.updated_at
+    FROM enquiries AS e
+    WHERE e.id = ? AND e.customer_id = ?
+  `).get(id, customerId);
+
+  if (!enquiry) {
+    return null;
+  }
+
+  const items = db.prepare(`
+    SELECT
+      ei.id,
+      ei.machine_model_id,
+      mm.name AS machine_name,
+      mm.model_number,
+      ei.quantity,
+      ei.notes
+    FROM enquiry_items AS ei
+    INNER JOIN machine_models AS mm
+      ON mm.id = ei.machine_model_id
+    WHERE ei.enquiry_id = ?
+    ORDER BY ei.id ASC
+  `).all(id);
+
+  return {
+    ...enquiry,
+    items,
+  };
+}
+
+
 // Updates the status of an existing enquiry.
 export function updateEnquiryStatus(id: number, input: UpdateEnquiryStatusInput) {
   // Check whether the enquiry exists.
@@ -240,4 +242,25 @@ export function updateEnquiryStatus(id: number, input: UpdateEnquiryStatusInput)
     FROM enquiries
     WHERE id = ?
   `).get(id);
+}
+
+
+// Returns enquiries belonging only to the specified customer
+export function getMyEnquiries(customerId: number) {
+  return db.prepare(`
+    SELECT
+      e.id,
+      e.enquiry_number,
+      e.status,
+      e.message,
+      e.created_at,
+      COUNT(ei.id) AS total_items
+    FROM enquiries AS e
+    LEFT JOIN enquiry_items AS ei
+      ON ei.enquiry_id = e.id
+    WHERE e.customer_id = ?
+    GROUP BY e.id
+    ORDER BY e.created_at DESC, e.id DESC
+    LIMIT 50
+  `).all(customerId);
 }

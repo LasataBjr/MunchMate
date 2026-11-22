@@ -478,3 +478,141 @@ export function updateQuotationStatus(id: number, input: UpdateQuotationStatusIn
 
   return getQuotationById(id);
 }
+
+// Get quotations belonging only to the specified customer.
+export function getMyQuotations(customerId: number) {
+  const quotations = db.prepare(`
+    SELECT
+      q.id,
+      q.enquiry_id,
+      q.quotation_number,
+      q.version_number,
+      q.status,
+      q.subtotal_paisa,
+      q.discount_paisa,
+      q.tax_amount_paisa,
+      q.total_amount_paisa,
+      q.valid_until,
+      q.terms,
+      q.created_at,
+      e.enquiry_number
+    FROM quotations q
+    INNER JOIN enquiries e ON e.id = q.enquiry_id
+    WHERE e.customer_id = ?
+    ORDER BY q.created_at DESC, q.id DESC
+    LIMIT 50
+  `).all(customerId);
+
+  const result = db.prepare(`
+    SELECT COUNT(*) AS total
+    FROM quotations q
+    INNER JOIN enquiries e ON e.id = q.enquiry_id
+    WHERE e.customer_id = ?
+  `).get(customerId) as { total: number };
+
+  return {
+    quotations,
+    total: result.total,
+  };
+}
+
+// Get one quotation only if it belongs to the specified customer
+export function getMyQuotationById(id: number, customerId: number) {
+  const quotation = db.prepare(`
+    SELECT
+      q.id,
+      q.enquiry_id,
+      q.quotation_number,
+      q.version_number,
+      q.status,
+      q.subtotal_paisa,
+      q.discount_paisa,
+      q.tax_amount_paisa,
+      q.total_amount_paisa,
+      q.valid_until,
+      q.terms,
+      q.created_at,
+      e.enquiry_number
+    FROM quotations q
+    INNER JOIN enquiries e ON e.id = q.enquiry_id
+    WHERE q.id = ? AND e.customer_id = ?
+  `).get(id, customerId);
+
+  if (!quotation) {
+    return null;
+  }
+
+  const items = db.prepare(`
+    SELECT
+      id,
+      machine_model_id,
+      description,
+      quantity,
+      unit_price_paisa,
+      line_total_paisa
+    FROM quotation_items
+    WHERE quotation_id = ?
+    ORDER BY id ASC
+  `).all(id);
+
+  return {
+    ...quotation as object,
+    items,
+  };
+}
+
+// Customer accepts or rejects the entire quotation
+export function decideQuotation(
+  id: number,
+  customerId: number,
+  decision: "accepted" | "rejected"
+) {
+  const decisionTransaction = db.transaction(() => {
+    const quotation = db.prepare(`
+      SELECT q.id, q.status FROM quotations q
+      INNER JOIN enquiries e ON e.id = q.enquiry_id
+      WHERE q.id = ? AND e.customer_id = ?
+    `).get(id, customerId) as
+      | { id: number; status: string }
+      | undefined;
+
+    // Do not reveal whether another customer's quotation exists
+    if (!quotation) {
+      throw new QuotationServiceError(
+        "QUOTATION_NOT_FOUND",
+        "Quotation not found"
+      );
+    }
+
+    if (quotation.status !== "sent") {
+      throw new QuotationServiceError(
+        "INVALID_STATUS_TRANSITION",
+        "Only sent quotations can be accepted or rejected"
+      );
+    }
+
+    const result = db.prepare(`
+      UPDATE quotations
+      SET status = ?
+      WHERE id = ?
+        AND status = 'sent'
+        AND EXISTS (
+          SELECT 1
+          FROM enquiries e
+          WHERE e.id = quotations.enquiry_id
+            AND e.customer_id = ?
+        )
+    `).run(decision, id, customerId);
+
+    if (result.changes !== 1) {
+      throw new QuotationServiceError(
+        "INVALID_STATUS_TRANSITION",
+        "This quotation has already received a decision"
+      );
+    }
+  });
+
+  decisionTransaction();
+
+  return getMyQuotationById(id, customerId);
+}

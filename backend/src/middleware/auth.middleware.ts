@@ -32,6 +32,7 @@ export const requireAuth: RequestHandler = (req, res, next) => {
         users.id,
         users.name,
         users.email,
+        users.customer_id,
         users.is_active,
         roles.name AS role
       FROM users
@@ -42,6 +43,7 @@ export const requireAuth: RequestHandler = (req, res, next) => {
           id: number;
           name: string;
           email: string;
+          customer_id: number | null;
           is_active: number;
           role: string;
         }
@@ -59,6 +61,7 @@ export const requireAuth: RequestHandler = (req, res, next) => {
       id: user.id,
       name: user.name,
       email: user.email,
+      customer_id: user.customer_id,
       role: user.role,
     };
 

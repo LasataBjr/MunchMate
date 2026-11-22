@@ -1,6 +1,6 @@
 
-import type { Request, Response } from "express";
-import { createEnquiry, getEnquiries, getEnquiryById, updateEnquiryStatus,} from "../services/enquiry.service.js";
+import type { Request, Response, RequestHandler } from "express";
+import { createEnquiry, getEnquiries, getEnquiryById, updateEnquiryStatus, getMyEnquiries, getMyEnquiryById,} from "../services/enquiry.service.js";
 import { createEnquirySchema } from "../validators/enquiry.validator.js";
 import { updateEnquiryStatusSchema } from "../validators/enquiry-status.validator.js";
 
@@ -18,8 +18,17 @@ export function createEnquiryController(req: Request, res: Response) {
       });
     }
 
-    // Save the enquiry
-    const enquiry = createEnquiry(validation.data);
+    // Get the authenticated customer's ID from the request context
+    const customerId = res.locals.authUser.customer_id;
+
+    if (!customerId) {
+      return res.status(403).json({
+        success: false,
+        message: "Customer account is not properly linked",
+      });
+    }
+
+    const enquiry = createEnquiry(validation.data, customerId);
 
     return res.status(201).json({
       success: true,
@@ -150,3 +159,58 @@ export function updateEnquiryStatusController(req: Request, res: Response) {
     });
   }
 }
+
+// Get enquiries belonging to the logged-in customer.
+export const getMyEnquiriesController: RequestHandler = (req, res) => {
+  const customerId = res.locals.authUser.customer_id;
+
+  if (!customerId) {
+    return res.status(403).json({
+      success: false,
+      message: "Customer account required",
+    });
+  }
+
+  const enquiries = getMyEnquiries(customerId);
+
+  return res.json({
+    success: true,
+    total: enquiries.length,
+    enquiries,
+  });
+};
+
+// Get one enquiry belonging to the logged-in customer.
+export const getMyEnquiryByIdController: RequestHandler = (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid enquiry ID",
+    });
+  }
+
+  const customerId = res.locals.authUser.customer_id;
+
+  if (!customerId) {
+    return res.status(403).json({
+      success: false,
+      message: "Customer account required",
+    });
+  }
+
+  const enquiry = getMyEnquiryById(id, customerId);
+
+  if (!enquiry) {
+    return res.status(404).json({
+      success: false,
+      message: "Enquiry not found",
+    });
+  }
+
+  return res.json({
+    success: true,
+    enquiry,
+  });
+};
