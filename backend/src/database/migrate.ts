@@ -5,18 +5,9 @@ import { fileURLToPath } from "node:url";
 
 import { db } from "./connection.js";
 
-// Find this file's directory.
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
+const migrationsDirectory = path.join(currentDirectory, "migrations");
 
-// Locate the initial SQL migration.
-const migrationFile = "001_initial_schema.sql";
-const migrationPath = path.join(
-  currentDirectory,
-  "migrations",
-  migrationFile
-);
-
-// Create the migration tracking table if it doesn't exist.
 db.exec(`
   CREATE TABLE IF NOT EXISTS schema_migrations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,26 +17,32 @@ db.exec(`
 `);
 
 try {
-  // Check that the migration file exists.
-  if (!fs.existsSync(migrationPath)) {
-    throw new Error(`Migration file not found: ${migrationPath}`);
-  }
+  // Automatically discover and sort migration files.
+  const migrationFiles = fs
+    .readdirSync(migrationsDirectory)
+    .filter((file) => /^\d+_.*\.sql$/.test(file))
+    .sort();
 
-  // Check whether this migration has already been applied.
-  const existingMigration = db
-    .prepare(
-      "SELECT migration_name FROM schema_migrations WHERE migration_name = ?"
-    )
-    .get(migrationFile);
+  for (const migrationFile of migrationFiles) {
+    const existingMigration = db
+      .prepare(
+        "SELECT migration_name FROM schema_migrations WHERE migration_name = ?"
+      )
+      .get(migrationFile);
 
-  if (existingMigration) {
-    console.log(`Migration already applied: ${migrationFile}`);
-  } else {
-    // Read the SQL file.
+    if (existingMigration) {
+      console.log(`Migration already applied: ${migrationFile}`);
+      continue;
+    }
+
+    const migrationPath = path.join(
+      migrationsDirectory,
+      migrationFile
+    );
+
     const migrationSQL = fs.readFileSync(migrationPath, "utf-8");
 
-    // Apply the SQL and record it in one transaction.
-    // If anything fails, both operations are rolled back.
+    // Apply migration and record it atomically.
     const applyMigration = db.transaction(() => {
       db.exec(migrationSQL);
 

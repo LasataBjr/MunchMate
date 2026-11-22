@@ -1,6 +1,8 @@
 
 import { Router } from "express"; // Import the Router class from the Express library
+import { env } from "../config/env.js";
 import { login } from "../controllers/auth.controller.js";
+import { registerCustomer } from "../controllers/customer-auth.controller.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import { requireRole } from "../middleware/role.middleware.js";
 
@@ -8,6 +10,8 @@ const router = Router();
 
 // Public route POST /api/auth/login
 router.post("/login", login);
+// for customer registration
+router.post("/register", registerCustomer);
 
 // Protected route
 router.get("/me", requireAuth, (req, res) => {
@@ -21,7 +25,7 @@ router.get("/me", requireAuth, (req, res) => {
 router.post("/logout", requireAuth, (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
   });

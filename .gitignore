@@ -17,6 +17,7 @@ frontend/.env.*
 
 # Authentication cookies
 backend/cookies.txt
+backend/*cookies*.txt
 
 # SQLite database files
 backend/data/*.db
