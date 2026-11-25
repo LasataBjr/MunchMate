@@ -12,6 +12,7 @@ import enquiryRoutes from "./routes/enquiry.routes.js";
 import quotationRoutes from "./routes/quotation.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
+import inventoryRoutes from "./routes/inventory.routes.js";
 
 // Create Express application
 const app = express();
@@ -30,6 +31,7 @@ app.use("/api/enquiries", enquiryRoutes);
 app.use("/api/quotations", quotationRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/inventory", inventoryRoutes);
 
 // Test route
 app.get("/api/health", (req, res) => {
