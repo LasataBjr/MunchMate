@@ -33,3 +33,6 @@ backend/data/*.db-wal
 .DS_Store
 Thumbs.db
 
+# Temporary authentication test files
+backend/*-login.json
+backend/*-login-response.json

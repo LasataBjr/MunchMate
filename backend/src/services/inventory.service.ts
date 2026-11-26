@@ -385,17 +385,35 @@ type ReleaseReservationResult =
   | { success: true; code: "RELEASED"; releasedCount: number }
   | {
       success: false;
-      code: "ORDER_NOT_FOUND" | "NO_ACTIVE_RESERVATIONS";
+      code: "ORDER_NOT_FOUND" | "NO_ACTIVE_RESERVATIONS" | "RESERVATIONS_ASSIGNED_TO_DELIVERY";
     };
 
 // ADMIN: Release all active reservations for an order
 // The caller must not wrap this function in another transaction.
 export function releaseOrderInventory(orderId: number, createdBy: number | null = null): ReleaseReservationResult {
-  const transaction = db.transaction(() => {
+  const transaction = db.transaction((): ReleaseReservationResult => {
     const order = db.prepare(`SELECT id FROM orders WHERE id = ?`).get(orderId);
 
     if (!order) {
       return { success: false, code: "ORDER_NOT_FOUND" } as const;
+    }
+
+    const assignedReservations = db
+      .prepare(
+        `SELECT COUNT(*) AS count
+        FROM inventory_reservations ir
+        JOIN delivery_items di
+          ON di.reservation_id = ir.id
+        WHERE ir.order_id = ?
+          AND ir.status = 'active'`
+      )
+      .get(orderId) as { count: number };
+
+    if (assignedReservations.count > 0) {
+      return {
+        success: false,
+        code: "RESERVATIONS_ASSIGNED_TO_DELIVERY" as const,
+      };
     }
 
     const reservations = db.prepare(`

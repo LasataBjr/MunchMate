@@ -80,11 +80,14 @@ export function updateOrderStatus(
   status: "confirmed" | "processing" | "completed" | "cancelled"
 ) {
   const transaction = db.transaction(() => {
-    const order = db.prepare(`
-      SELECT id, status
-      FROM orders
+    const order = db.prepare(`SELECT id, status, payment_status, fulfillment_status FROM orders
       WHERE id = ?
-    `).get(id) as { id: number; status: string } | undefined;
+    `).get(id) as {
+      id: number;
+      status: string;
+      payment_status: string;
+      fulfillment_status: string;
+    } | undefined;
 
     if (!order) {
       return "NOT_FOUND" as const;
@@ -101,9 +104,34 @@ export function updateOrderStatus(
       return "INVALID_TRANSITION" as const;
     }
 
-    db.prepare(`
-      UPDATE orders
-      SET status = ?, updated_at = CURRENT_TIMESTAMP
+    // Do not cancel orders with pending or completed payment activity
+    // A separate cancellation/refund workflow is needed for those orders
+    if (status === "cancelled" && order.payment_status !== "unpaid") {
+      return "INVALID_TRANSITION" as const;
+    }
+
+    // An order cannot be completed until all ordered machines are delivered
+    if (
+      status === "completed" &&
+      order.fulfillment_status !== "delivered"
+    ) {
+      return "INVALID_TRANSITION" as const;
+    }
+
+    // Never cancel an order that still has actively reserved machines
+    if (status === "cancelled") {
+      const activeReservations = db.prepare(`
+        SELECT COUNT(*) AS count
+        FROM inventory_reservations
+        WHERE order_id = ? AND status = 'active'
+      `).get(id) as { count: number };
+
+      if (activeReservations.count > 0) {
+        return "INVALID_TRANSITION" as const;
+      }
+    }
+
+    db.prepare(`UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `).run(status, id);
 
