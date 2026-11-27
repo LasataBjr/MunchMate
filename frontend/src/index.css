@@ -1,1 +1,55 @@
 @import "tailwindcss";
+
+/* lets you write dark:something when you need a one-off */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brand-red: #C31C2A;
+  --color-brand-dark: #A31C28;
+  --color-brand-black: #000000;
+}
+
+/* Turns the variables below into Tailwind classes: bg-surface, text-fg, border-line ... */
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-card: var(--card);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-line: var(--line);
+  --color-hover: var(--hover);
+  --color-accent: var(--accent);
+}
+
+:root {
+  color-scheme: light;
+  --surface: #ffffff;     /* page background */
+  --surface-alt: #f9fafb; /* colored bands */
+  --card: #ffffff;        /* cards and inputs */
+  --fg: #111111;          /* main text */
+  --fg-muted: #4b5563;    /* secondary text */
+  --line: #e5e7eb;        /* borders */
+  --hover: #f3f4f6;       /* hover backgrounds */
+  --accent: #C31C2A;      /* red text and links */
+}
+
+.dark {
+  color-scheme: dark;
+  --surface: #121212;
+  --surface-alt: #18181b;
+  --card: #1f1f23;
+  --fg: #f4f4f5;
+  --fg-muted: #a1a1aa;
+  --line: #2e2e32;
+  --hover: #26262a;
+  --accent: #f2606c;
+}
+
+@layer base {
+  body {
+    min-width: 320px;
+    min-height: 100vh;
+    background: var(--surface);
+    color: var(--fg);
+  }
+}
