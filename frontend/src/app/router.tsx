@@ -25,6 +25,7 @@ import QuotationDetailsPage from '../features/customer/quotations/QuotationDetai
 import MyOrdersPage from '../features/customer/orders/MyOrdersPage'
 import OrderDetailsPage from '../features/customer/orders/OrderDetailsPage'
 import MyProfilePage from "../features/customer/profile/MyProfilePage";
+import MyPaymentsPage from '../features/customer/payments/MyPaymentPage';
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -71,7 +72,7 @@ export const router = createBrowserRouter([
           { path: 'orders', element: <MyOrdersPage /> },
           { path: 'orders/:id', element: <OrderDetailsPage /> },
 
-          { path: "payments", element: <PlaceholderPage title="My Payments" /> },
+          { path: "payments", element: <MyPaymentsPage /> },
           { path: "deliveries", element: <PlaceholderPage title="My Deliveries" />, },
           
           { path: "profile", element: <MyProfilePage /> },
