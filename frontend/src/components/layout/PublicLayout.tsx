@@ -4,6 +4,7 @@ import { Menu, X } from 'lucide-react'
 import { buttonStyles } from '../ui/Button'
 import ThemeToggle from '../ui/ThemeToggle'
 import Container from './Container'
+import Logo from '../common/Logo'
 
 const links = [
   { to: '/', label: 'Home', end: true },
@@ -12,8 +13,16 @@ const links = [
 ]
 
 function navClass({ isActive }: { isActive: boolean }) {
-  return `rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-    isActive ? 'text-accent' : 'text-fg-muted hover:bg-hover hover:text-fg'
+  return `relative px-3 py-2 text-base font-medium transition-colors hover:text-accent ${
+    isActive
+      ? 'text-accent after:absolute after:inset-x-3 after:-bottom-1 after:h-0.5 after:rounded-full after:bg-accent'
+      : 'text-fg'
+  }`
+}
+
+function mobileNavClass({ isActive }: { isActive: boolean }) {
+  return `block rounded-md px-3 py-3 text-base font-medium transition-colors hover:text-accent ${
+    isActive ? 'bg-brand-red/10 text-accent' : 'text-fg'
   }`
 }
 
@@ -52,9 +61,13 @@ function PublicLayout() {
         }`}
       >
         <nav aria-label="Main">
-          <Container className="flex items-center justify-between py-3">
-            <Link to="/" onClick={closeMenu} className="text-xl font-extrabold tracking-tight">
-              Grab<span className="text-accent">24</span>
+          <Container className="flex h-16 items-center justify-between">
+            <Link
+              to="/"
+              onClick={closeMenu}
+              className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+            >
+              <Logo />
             </Link>
 
             {/* Desktop menu */}
@@ -97,7 +110,7 @@ function PublicLayout() {
                   to={l.to}
                   end={l.end}
                   onClick={closeMenu}
-                  className={(state) => `block ${navClass(state)}`}
+                  className={mobileNavClass}
                 >
                   {l.label}
                 </NavLink>

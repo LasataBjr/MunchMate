@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { QrCode, ShieldCheck, Truck } from 'lucide-react'
 import Container from '../../../../components/layout/Container'
 import { buttonStyles } from '../../../../components/ui/Button'
-import heroImage from '../../../../assets/images/hero-vending.jpg'
+import heroImage from '../../../../assets/images/hero-vending.webp'
 
 const benefits = [
   { icon: ShieldCheck, text: 'Clear quotations' },

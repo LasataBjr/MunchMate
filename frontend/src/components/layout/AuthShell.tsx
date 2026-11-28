@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { siteInfo } from '../../config/site'
+import Logo from '../common/Logo'
 
 type AuthShellProps = {
   panel: ReactNode
@@ -26,9 +26,9 @@ function AuthShell({ panel, children, contentWidth = 'max-w-md' }: AuthShellProp
         <div className="relative max-w-md">
           <Link
             to="/"
-            className="text-lg font-extrabold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+            className="inline-block rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
           >
-            {siteInfo.name}
+            <Logo className="h-10" tone="light" textClassName="text-2xl" />
           </Link>
           <div className="mt-10">{panel}</div>
         </div>

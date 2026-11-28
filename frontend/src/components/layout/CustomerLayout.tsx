@@ -11,8 +11,8 @@ import {
   UserRound,
 } from 'lucide-react'
 
+import Logo from '../common/Logo'
 import { useAuth } from '../../app/providers/AuthProvider'
-import { siteInfo } from '../../config/site'
 import Button, { buttonStyles } from '../ui/Button'
 import ThemeToggle from '../ui/ThemeToggle'
 
@@ -47,6 +47,7 @@ function CustomerLayout() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
+
   // Adjust this one line to match the fields your user object really has
   const displayName = user?.email ?? 'Customer';
 
@@ -68,8 +69,11 @@ function CustomerLayout() {
       {/* Top bar */}
       <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur">
         <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
-          <Link to="/customer" className="text-xl font-extrabold tracking-tight">
-            {siteInfo.name}
+          <Link
+            to="/customer"
+            className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+          >
+            <Logo />
           </Link>
           <span className="hidden rounded-full bg-brand-red/10 px-2.5 py-0.5 text-xs font-semibold text-accent sm:inline">
             Customer portal
