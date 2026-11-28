@@ -9,6 +9,11 @@ import HomePage from "../features/public/home/HomePage";
 import MachineCatalogPage from "../features/public/machine-catalog/MachineCatalogPage";
 import MachineDetailsPage from "../features/public/machine-details/MachineDetailsPage";
 import ContactPage from "../features/public/contact/ContactPage";
+import EnquiryPage from "../features/public/enquiries/EnquiryPage";
+
+import ProtectedRoute from "../features/auth/components/ProtectedRoute";
+import LoginPage from "../features/auth/login/LoginPage";
+import RegisterPage from "../features/auth/register/RegisterPage";
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -32,34 +37,36 @@ export const router = createBrowserRouter([
         element: <MachineDetailsPage />,
       },
       { path: "/contact", element: <ContactPage /> },
-      {
-        path: "/enquiries/new",
-        element: <PlaceholderPage title="Submit an Enquiry" />,
-      },
-      { path: "/login", element: <PlaceholderPage title="Login" /> },
-      { path: "/register", element: <PlaceholderPage title="Create Account" /> },
+      { path: "/enquiries/new", element: <EnquiryPage />,},
+      { path: "/login", element: <LoginPage /> },
+      { path: "/register", element: <RegisterPage /> },
     ],
   },
   {
-    path: "/customer",
-    element: <CustomerLayout />,
+    element: <ProtectedRoute />,
     children: [
-      { index: true, element: <PlaceholderPage title="Customer Dashboard" /> },
       {
-        path: "enquiries",
-        element: <PlaceholderPage title="My Enquiries" />,
+        path: "/customer",
+        element: <CustomerLayout />,
+        children: [
+          { index: true, element: <PlaceholderPage title="Customer Dashboard" /> },
+          {
+            path: "enquiries",
+            element: <PlaceholderPage title="My Enquiries" />,
+          },
+          {
+            path: "quotations",
+            element: <PlaceholderPage title="My Quotations" />,
+          },
+          { path: "orders", element: <PlaceholderPage title="My Orders" /> },
+          { path: "payments", element: <PlaceholderPage title="My Payments" /> },
+          {
+            path: "deliveries",
+            element: <PlaceholderPage title="My Deliveries" />,
+          },
+          { path: "profile", element: <PlaceholderPage title="My Profile" /> },
+        ],
       },
-      {
-        path: "quotations",
-        element: <PlaceholderPage title="My Quotations" />,
-      },
-      { path: "orders", element: <PlaceholderPage title="My Orders" /> },
-      { path: "payments", element: <PlaceholderPage title="My Payments" /> },
-      {
-        path: "deliveries",
-        element: <PlaceholderPage title="My Deliveries" />,
-      },
-      { path: "profile", element: <PlaceholderPage title="My Profile" /> },
     ],
   },
   {

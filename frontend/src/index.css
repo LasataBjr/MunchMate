@@ -19,6 +19,12 @@
   --color-line: var(--line);
   --color-hover: var(--hover);
   --color-accent: var(--accent);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-danger-line: var(--danger-line);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-success-line: var(--success-line);
 }
 
 :root {
@@ -31,6 +37,12 @@
   --line: #e5e7eb;        /* borders */
   --hover: #f3f4f6;       /* hover backgrounds */
   --accent: #C31C2A;      /* red text and links */
+  --danger: #b91c1c;
+  --danger-bg: #fef2f2;
+  --danger-line: #fecaca;
+  --success: #15803d;
+  --success-bg: #f0fdf4;
+  --success-line: #bbf7d0;
 }
 
 .dark {
@@ -43,6 +55,12 @@
   --line: #2e2e32;
   --hover: #26262a;
   --accent: #f2606c;
+  --danger: #f87171;
+  --danger-bg: rgb(239 68 68 / 0.12);
+  --danger-line: rgb(239 68 68 / 0.35);
+  --success: #4ade80;
+  --success-bg: rgb(34 197 94 / 0.12);
+  --success-line: rgb(34 197 94 / 0.35);
 }
 
 @layer base {
