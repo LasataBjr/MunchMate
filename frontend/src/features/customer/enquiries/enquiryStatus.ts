@@ -41,3 +41,17 @@ export function matchesFilter(status: string, filter: EnquiryFilter): boolean {
   const group = groups[filter]
   return group === null || group.includes(status.toLowerCase())
 }
+
+export const progressSteps = ['Submitted', 'Under review', 'Quotation ready', 'Accepted']
+
+const progressIndex: Record<string, number> = {
+  new: 0,
+  reviewing: 1,
+  quoted: 2,
+  accepted: 3,
+}
+
+// null means the enquiry left the normal path (declined, cancelled, or unknown)
+export function getProgressIndex(status: string): number | null {
+  return progressIndex[status.toLowerCase()] ?? null
+}

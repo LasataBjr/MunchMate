@@ -1,350 +1,324 @@
-
-import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { isAxiosError } from 'axios'
 import {
   ArrowLeft,
-  AlertCircle,
+  ArrowRight,
   CalendarDays,
   ClipboardList,
+  Hash,
+  MessageSquare,
   Package,
   RefreshCw,
-} from "lucide-react";
-import { isAxiosError } from "axios";
+  XCircle,
+} from 'lucide-react'
 
-import { getMyEnquiryById } from "../../../services/api/enquiries.api";
+import { buttonStyles } from '../../../components/ui/Button'
+import EmptyState from '../../../components/ui/EmptyState'
+import ErrorMessage from '../../../components/ui/ErrorMessage'
+import Skeleton from '../../../components/ui/Skeleton'
+import StatusBadge from '../../../components/ui/StatusBadge'
+import { getMyEnquiryById } from '../../../services/api/enquiries.api'
+import { formatDateTime } from '../../../utils/formatDate'
 
-import type {
-  MyEnquiryDetailsResponse,
-} from "../../public/enquiries/types/enquiry.types";
+import type { MyEnquiryDetailsResponse } from '../../public/enquiries/types/enquiry.types'
+import EnquiryTimeline from './components/EnquiryTimeline'
+import { getEnquiryStatus, getProgressIndex } from './enquiryStatus'
 
-// Format date for display
-function formatDate(dateString: string) {
-  const date = new Date(dateString.replace(" ", "T"));
+type EnquiryDetails = MyEnquiryDetailsResponse['enquiry']
 
-  if (Number.isNaN(date.getTime())) {
-    return dateString;
-  }
-
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
-
-// Display enquiry status
-function EnquiryStatusBadge({ status }: { status: string }) {
-  const normalizedStatus = status.toLowerCase();
-
-  const statusStyles: Record<string, string> = {
-    new: "bg-blue-50 text-blue-700",
-    reviewing: "bg-yellow-50 text-yellow-700",
-    quoted: "bg-purple-50 text-purple-700",
-    accepted: "bg-green-50 text-green-700",
-    rejected: "bg-red-50 text-red-700",
-    cancelled: "bg-gray-100 text-gray-600",
-  };
-
-  const style =
-    statusStyles[normalizedStatus] ?? "bg-gray-100 text-gray-600";
+function NextStepCard({ status }: { status: string }) {
+  const key = status.toLowerCase()
+  const info = getEnquiryStatus(status)
 
   return (
-    <span
-      className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold capitalize ${style}`}
+    <section
+      aria-labelledby="next-step-heading"
+      className={`rounded-xl border p-5 ${
+        key === 'quoted' ? 'border-brand-red/40 bg-brand-red/5' : 'border-line bg-card'
+      }`}
     >
-      {status.replaceAll("_", " ")}
-    </span>
-  );
+      <h2 id="next-step-heading" className="text-sm font-semibold text-fg">
+        {key === 'quoted' ? 'Your quotation is ready' : 'What happens next'}
+      </h2>
+      <p className="mt-2 text-sm leading-6 text-fg-muted">{info.hint}</p>
+
+      {key === 'quoted' && (
+        <Link to="/customer/quotations" className={`${buttonStyles()} mt-4 w-full`}>
+          View quotation
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      )}
+
+      {(key === 'rejected' || key === 'cancelled') && (
+        <Link
+          to="/machines"
+          className={`${buttonStyles({ variant: 'secondary' })} mt-4 w-full`}
+        >
+          Browse machines
+        </Link>
+      )}
+    </section>
+  )
 }
 
-// Main page
 function EnquiryDetailsPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>()
+  const validId = Boolean(id && /^\d+$/.test(id) && Number(id) > 0)
 
-  const [enquiry, setEnquiry] =
-    useState<MyEnquiryDetailsResponse["enquiry"] | null>(null);
-
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [notFound, setNotFound] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
+  const [enquiry, setEnquiry] = useState<EnquiryDetails | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [notFound, setNotFound] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
-    let cancelled = false;
+    if (!validId) return
+
+    let cancelled = false
 
     async function fetchEnquiry() {
-      if (!id || !/^\d+$/.test(id) || Number(id) <= 0) {
-        setError("Invalid enquiry ID.");
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        setIsLoading(true);
-        setError("");
-        setNotFound(false);
-        setEnquiry(null);
+        setLoading(true)
+        setError(null)
+        setNotFound(false)
+        setEnquiry(null)
 
-        const response = await getMyEnquiryById(Number(id));
-
-        if (!cancelled) {
-          setEnquiry(response.enquiry);
-        }
+        const response = await getMyEnquiryById(Number(id))
+        if (!cancelled) setEnquiry(response.enquiry)
       } catch (err) {
-        if (cancelled) return;
+        if (cancelled) return
 
         if (isAxiosError(err) && err.response?.status === 404) {
-          setNotFound(true);
+          setNotFound(true)
         } else {
-          setError(
-            "Unable to load this enquiry. Please try again."
-          );
+          setError('Unable to load this enquiry. Please try again.')
         }
       } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
+        if (!cancelled) setLoading(false)
       }
     }
 
-    fetchEnquiry();
-
+    void fetchEnquiry()
     return () => {
-      cancelled = true;
-    };
-  }, [id, retryCount]);
+      cancelled = true
+    }
+  }, [id, validId, retryCount])
+
+  const backLink = (
+    <Link
+      to="/customer/enquiries"
+      className="inline-flex items-center gap-2 text-sm font-medium text-fg-muted transition-colors hover:text-accent"
+    >
+      <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+      My enquiries
+    </Link>
+  )
+
+  if (!validId || notFound) {
+    return (
+      <div>
+        {backLink}
+        <EmptyState
+          as="h2"
+          className="mt-6"
+          icon={<ClipboardList className="h-7 w-7" aria-hidden="true" />}
+          title="Enquiry not found"
+          message="This enquiry does not exist or is not available in your account."
+          action={
+            <Link to="/customer/enquiries" className={buttonStyles()}>
+              Back to my enquiries
+            </Link>
+          }
+        />
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div role="status" aria-label="Loading enquiry details">
+        {backLink}
+        <Skeleton className="mt-6 h-9 w-72" />
+        <div className="mt-8 grid gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+            <Skeleton className="h-28 rounded-xl" />
+            <Skeleton className="h-64 rounded-xl" />
+          </div>
+          <Skeleton className="h-64 rounded-xl" />
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !enquiry) {
+    return (
+      <div>
+        {backLink}
+        <ErrorMessage
+          className="mt-6"
+          title="Unable to load enquiry"
+          message={error ?? 'Something went wrong.'}
+          onRetry={() => setRetryCount((count) => count + 1)}
+        />
+      </div>
+    )
+  }
+
+  const status = getEnquiryStatus(enquiry.status)
+  const offTrack = getProgressIndex(enquiry.status) === null
+  const totalUnits = enquiry.items.reduce((sum, item) => sum + item.quantity, 0)
 
   return (
-    <section className="min-h-screen bg-surface p-4 sm:p-6">
+    <div>
+      {backLink}
 
-      {/* Back navigation */}
-      <Link
-        to="/customer/enquiries"
-        className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-fg-muted transition hover:text-accent"
-      >
-        <ArrowLeft size={18} />
-        Back to My Enquiries
-      </Link>
-
-      {/* Page heading */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-fg">
-          Enquiry Details
-        </h1>
-
-        <p className="mt-1 text-sm text-fg-muted">
-          View the details and machines included in your enquiry.
-        </p>
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm text-fg-muted">Enquiry</p>
+          <h1 className="break-all font-mono text-2xl font-extrabold tracking-tight sm:text-3xl">
+            {enquiry.enquiry_number}
+          </h1>
+        </div>
+        <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
       </div>
 
-      {/* Loading */}
-      {isLoading && (
-        <div className="rounded-xl border border-line bg-white p-10 text-center">
-          <RefreshCw
-            size={28}
-            className="mx-auto animate-spin text-[#C31C2A]"
-          />
-
-          <p className="mt-3 text-sm text-gray-500">
-            Loading enquiry details...
-          </p>
-        </div>
-      )}
-
-      {/* Not found */}
-      {!isLoading && notFound && (
-        <div className="rounded-xl border border-line bg-white p-10 text-center">
-          <ClipboardList
-            size={36}
-            className="mx-auto text-gray-400"
-          />
-
-          <h2 className="mt-4 text-lg font-semibold text-gray-900">
-            Enquiry not found
-          </h2>
-
-          <p className="mt-2 text-sm text-gray-500">
-            This enquiry does not exist or is not available in your account.
-          </p>
-
-          <Link
-            to="/customer/enquiries"
-            className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#C31C2A] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#A31C28]"
+      <div className="mt-8 grid items-start gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          {/* Progress */}
+          <section
+            aria-label="Progress"
+            className="rounded-xl border border-line bg-card p-5 shadow-sm sm:p-6"
           >
-            <ArrowLeft size={16} />
-            Back to Enquiries
-          </Link>
-        </div>
-      )}
-
-      {/* General error */}
-      {!isLoading && error && !notFound && (
-        <div className="rounded-xl border border-red-200 bg-white p-8 text-center">
-          <AlertCircle
-            size={32}
-            className="mx-auto text-red-500"
-          />
-
-          <h2 className="mt-3 font-semibold text-gray-900">
-            Something went wrong
-          </h2>
-
-          <p className="mt-2 text-sm text-gray-500">
-            {error}
-          </p>
-
-          <button
-            type="button"
-            onClick={() => setRetryCount((count) => count + 1)}
-            className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#C31C2A] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#A31C28]"
-          >
-            <RefreshCw size={16} />
-            Try Again
-          </button>
-        </div>
-      )}
-
-      {/* Enquiry details */}
-      {!isLoading && !error && !notFound && enquiry && (
-        <div className="space-y-5">
-
-          {/* Enquiry overview */}
-          <div className="rounded-xl border border-line bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">
-                  Enquiry Number
-                </p>
-
-                <h2 className="mt-1 break-all text-xl font-bold text-gray-900">
-                  {enquiry.enquiry_number}
-                </h2>
-              </div>
-
-              <EnquiryStatusBadge status={enquiry.status} />
-            </div>
-
-            <div className="mt-6 grid gap-5 border-t border-gray-100 pt-5 sm:grid-cols-2">
+            {offTrack ? (
               <div className="flex items-start gap-3">
-                <CalendarDays
-                  size={20}
-                  className="mt-0.5 text-gray-400"
-                />
-
+                <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-fg-muted" aria-hidden="true" />
                 <div>
-                  <p className="text-sm text-gray-500">
-                    Submitted On
-                  </p>
-
-                  <p className="mt-1 text-sm font-medium text-gray-900">
-                    {formatDate(enquiry.created_at)}
+                  <p className="font-semibold text-fg">{status.label}</p>
+                  <p className="mt-1 text-sm text-fg-muted">
+                    {status.hint || 'This enquiry is no longer active.'}
                   </p>
                 </div>
               </div>
-
-              <div className="flex items-start gap-3">
-                <RefreshCw
-                  size={20}
-                  className="mt-0.5 text-gray-400"
-                />
-
-                <div>
-                  <p className="text-sm text-gray-500">
-                    Last Updated
-                  </p>
-
-                  <p className="mt-1 text-sm font-medium text-gray-900">
-                    {formatDate(enquiry.updated_at)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Customer message */}
-          <div className="rounded-xl border border-line bg-white p-5 shadow-sm sm:p-6">
-            <h2 className="font-semibold text-gray-900">
-              Your Message
-            </h2>
-
-            {enquiry.message ? (
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-600">
-                {enquiry.message}
-              </p>
             ) : (
-              <p className="mt-3 text-sm italic text-gray-400">
-                No additional message was provided.
-              </p>
+              <EnquiryTimeline status={enquiry.status} />
             )}
-          </div>
+          </section>
 
-          {/* Machine items */}
-          <div className="rounded-xl border border-line bg-white p-5 shadow-sm sm:p-6">
-            <div className="mb-5 flex items-center gap-3">
-              <Package size={22} className="text-[#C31C2A]" />
-
+          {/* Machines */}
+          <section
+            aria-labelledby="machines-heading"
+            className="rounded-xl border border-line bg-card p-5 shadow-sm sm:p-6"
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-red/10 text-accent">
+                <Package className="h-5 w-5" aria-hidden="true" />
+              </span>
               <div>
-                <h2 className="font-semibold text-gray-900">
-                  Requested Machines
+                <h2 id="machines-heading" className="font-semibold text-fg">
+                  Requested machines
                 </h2>
-
-                <p className="mt-1 text-sm text-gray-500">
-                  {enquiry.items.length}{" "}
-                  {enquiry.items.length === 1 ? "machine item" : "machine items"}
+                <p className="text-sm text-fg-muted">
+                  {enquiry.items.length} {enquiry.items.length === 1 ? 'model' : 'models'},{' '}
+                  {totalUnits} {totalUnits === 1 ? 'unit' : 'units'} in total
                 </p>
               </div>
             </div>
 
             {enquiry.items.length === 0 ? (
-              <p className="text-sm text-gray-500">
-                No machine items found for this enquiry.
-              </p>
+              <p className="mt-5 text-sm text-fg-muted">No machine items found for this enquiry.</p>
             ) : (
-              <div className="space-y-4">
+              <ul className="mt-5 divide-y divide-line rounded-lg border border-line">
                 {enquiry.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-lg border border-gray-200 p-4"
-                  >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">
-                          {item.machine_name}
-                        </h3>
-
-                        <p className="mt-1 text-sm text-gray-500">
-                          Model: {item.model_number}
-                        </p>
+                  <li key={item.id} className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-fg">{item.machine_name}</h3>
+                        <p className="mt-0.5 text-sm text-fg-muted">Model: {item.model_number}</p>
                       </div>
-
-                      <span className="w-fit rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700">
-                        Quantity: {item.quantity}
+                      <span className="shrink-0 rounded-lg bg-surface-alt px-3 py-1.5 text-sm font-semibold tabular-nums text-fg">
+                        × {item.quantity}
                       </span>
                     </div>
 
                     {item.notes && (
-                      <div className="mt-4 border-t border-gray-100 pt-3">
-                        <p className="text-xs font-medium text-gray-500">
-                          Additional Notes
-                        </p>
-
-                        <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">
-                          {item.notes}
-                        </p>
+                      <div className="mt-3 rounded-lg bg-surface-alt p-3">
+                        <p className="text-xs font-medium text-fg-muted">Your notes</p>
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-fg">{item.notes}</p>
                       </div>
                     )}
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
-          </div>
+          </section>
 
+          {/* Message */}
+          <section
+            aria-labelledby="message-heading"
+            className="rounded-xl border border-line bg-card p-5 shadow-sm sm:p-6"
+          >
+            <h2 id="message-heading" className="flex items-center gap-2 font-semibold text-fg">
+              <MessageSquare className="h-5 w-5 text-fg-muted" aria-hidden="true" />
+              Your message
+            </h2>
+
+            {enquiry.message ? (
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-fg-muted">
+                {enquiry.message}
+              </p>
+            ) : (
+              <p className="mt-3 text-sm italic text-fg-muted">
+                No additional message was provided.
+              </p>
+            )}
+          </section>
         </div>
-      )}
-    </section>
-  );
+
+        {/* Side column */}
+        <aside className="space-y-6 lg:sticky lg:top-24">
+          <NextStepCard status={enquiry.status} />
+
+          <section
+            aria-labelledby="summary-heading"
+            className="rounded-xl border border-line bg-card p-5 shadow-sm"
+          >
+            <h2 id="summary-heading" className="text-sm font-semibold text-fg">
+              Summary
+            </h2>
+
+            <dl className="mt-4 space-y-4 text-sm">
+              <div className="flex items-start gap-3">
+                <Hash className="mt-0.5 h-4 w-4 shrink-0 text-fg-muted" aria-hidden="true" />
+                <div className="min-w-0">
+                  <dt className="text-fg-muted">Enquiry number</dt>
+                  <dd className="break-all font-mono font-medium text-fg">
+                    {enquiry.enquiry_number}
+                  </dd>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-fg-muted" aria-hidden="true" />
+                <div>
+                  <dt className="text-fg-muted">Submitted</dt>
+                  <dd className="font-medium text-fg">{formatDateTime(enquiry.created_at)}</dd>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 text-fg-muted" aria-hidden="true" />
+                <div>
+                  <dt className="text-fg-muted">Last updated</dt>
+                  <dd className="font-medium text-fg">{formatDateTime(enquiry.updated_at)}</dd>
+                </div>
+              </div>
+            </dl>
+          </section>
+        </aside>
+      </div>
+    </div>
+  )
 }
 
 export default EnquiryDetailsPage;
