@@ -53,3 +53,34 @@ export interface CreateEnquiryResponse {
 
 // Useful for the frontend machine selector
 export type EnquiryMachine = Machine;
+
+// One enquiry in the customer's enquiry list
+export interface MyEnquiryListItem {
+  id: number;
+  enquiry_number: string;
+  status: string;
+  message: string | null;
+  created_at: string;
+  total_items: number;
+}
+
+// Response from GET /enquiries/my
+export interface MyEnquiriesResponse {
+  success: boolean;
+  total: number;
+  enquiries: MyEnquiryListItem[];
+}
+
+// GET /enquiries/my/:id
+export interface MyEnquiryDetailsResponse {
+  success: boolean;
+  enquiry: {
+    id: number;
+    enquiry_number: string;
+    status: string;
+    message: string | null;
+    created_at: string;
+    updated_at: string;
+    items: EnquiryMachineItem[];
+  };
+}

@@ -11,9 +11,14 @@ import MachineDetailsPage from "../features/public/machine-details/MachineDetail
 import ContactPage from "../features/public/contact/ContactPage";
 import EnquiryPage from "../features/public/enquiries/EnquiryPage";
 
+//Authentication
 import ProtectedRoute from "../features/auth/components/ProtectedRoute";
 import LoginPage from "../features/auth/login/LoginPage";
 import RegisterPage from "../features/auth/register/RegisterPage";
+
+//Customer Portal
+import MyEnquiriesPage from "../features/customer/enquiries/MyEnquiryPage";
+import EnquiryDetailsPage from "../features/customer/enquiries/EnquiryDetailsPage";
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -50,10 +55,9 @@ export const router = createBrowserRouter([
         element: <CustomerLayout />,
         children: [
           { index: true, element: <PlaceholderPage title="Customer Dashboard" /> },
-          {
-            path: "enquiries",
-            element: <PlaceholderPage title="My Enquiries" />,
-          },
+          { path: "enquiries", element: <MyEnquiriesPage /> },
+          { path: "enquiries/:id", element: <EnquiryDetailsPage /> },
+
           {
             path: "quotations",
             element: <PlaceholderPage title="My Quotations" />,
