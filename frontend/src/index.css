@@ -71,3 +71,21 @@
     color: var(--fg);
   }
 }
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Respect people who turn animations off in their system settings */
+@media (prefers-reduced-motion: no-preference) {
+  .page-enter {
+    animation: page-enter 200ms ease-out both;
+  }
+}

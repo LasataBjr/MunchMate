@@ -110,9 +110,11 @@ function PublicLayout() {
         )}
       </header>
 
-      <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
+     <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
+      <div key={pathname} className="page-enter">
         <Outlet />
-      </main>
+      </div>
+    </main>
 
       <footer className="border-t border-line bg-surface-alt">
         <Container className="py-4 text-center text-sm text-fg-muted">

@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, ScrollRestoration, useLocation, useNavigate } from 'react-router-dom'
 import {
   ClipboardList,
   CreditCard,
@@ -43,11 +43,12 @@ function tabLinkClass({ isActive }: { isActive: boolean }) {
 }
 
 function CustomerLayout() {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   // Adjust this one line to match the fields your user object really has
-  const displayName = user?.email ?? 'Customer'
+  const displayName = user?.email ?? 'Customer';
 
   async function handleLogout() {
     await logout()
@@ -56,6 +57,7 @@ function CustomerLayout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-surface-alt">
+      <ScrollRestoration />
       <a
         href="#portal-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-card focus:px-4 focus:py-2 focus:text-fg focus:shadow"
@@ -137,7 +139,7 @@ function CustomerLayout() {
           tabIndex={-1}
           className="min-w-0 flex-1 px-4 py-6 focus:outline-none sm:px-6 lg:px-8 lg:py-8"
         >
-          <div className="mx-auto max-w-6xl">
+          <div key={pathname} className="page-enter">
             <Outlet />
           </div>
         </main>

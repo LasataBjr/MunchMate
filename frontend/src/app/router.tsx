@@ -19,6 +19,10 @@ import RegisterPage from "../features/auth/register/RegisterPage";
 //Customer Portal
 import MyEnquiriesPage from "../features/customer/enquiries/MyEnquiryPage";
 import EnquiryDetailsPage from "../features/customer/enquiries/EnquiryDetailsPage";
+import MyQuotationsPage from '../features/customer/quotations/MyQuotationsPage';
+import QuotationDetailsPage from '../features/customer/quotations/QuotationDetailsPage';
+import MyOrdersPage from '../features/customer/orders/MyOrdersPage'
+import OrderDetailsPage from '../features/customer/orders/OrderDetailsPage'
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -58,11 +62,12 @@ export const router = createBrowserRouter([
           { path: "enquiries", element: <MyEnquiriesPage /> },
           { path: "enquiries/:id", element: <EnquiryDetailsPage /> },
 
-          {
-            path: "quotations",
-            element: <PlaceholderPage title="My Quotations" />,
-          },
-          { path: "orders", element: <PlaceholderPage title="My Orders" /> },
+          {path: "quotations", element: <MyQuotationsPage /> },
+          { path: "quotations/:id", element: <QuotationDetailsPage  /> },
+          
+          { path: 'orders', element: <MyOrdersPage /> },
+          { path: 'orders/:id', element: <OrderDetailsPage /> },
+
           { path: "payments", element: <PlaceholderPage title="My Payments" /> },
           {
             path: "deliveries",
