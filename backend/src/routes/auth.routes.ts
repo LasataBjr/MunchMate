@@ -2,6 +2,7 @@
 import { Router } from "express"; // Import the Router class from the Express library
 import { env } from "../config/env.js";
 import { login } from "../controllers/auth.controller.js";
+import { changePasswordController } from "../controllers/auth-password.controller.js";
 import { registerCustomer } from "../controllers/customer-auth.controller.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import { requireRole } from "../middleware/role.middleware.js";
@@ -20,6 +21,8 @@ router.get("/me", requireAuth, (req, res) => {
         user: res.locals.authUser,
     });
 });
+
+router.patch("/change-password", requireAuth, changePasswordController);
 
 // Protected logout route
 router.post("/logout", requireAuth, (req, res) => {

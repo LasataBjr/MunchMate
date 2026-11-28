@@ -99,7 +99,11 @@ export async function registerCustomer(req: Request, res: Response) {
     const account = createAccount();
 
     const token = jwt.sign(
-      { userId: account.userId, role: "Customer" },
+      {
+        userId: account.userId,
+        role: "Customer",
+        tokenVersion: 0,
+      },
       env.JWT_SECRET,
       { expiresIn: "1h" }
     );

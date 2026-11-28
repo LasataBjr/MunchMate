@@ -17,12 +17,14 @@ import LoginPage from "../features/auth/login/LoginPage";
 import RegisterPage from "../features/auth/register/RegisterPage";
 
 //Customer Portal
+import DashboardPage from '../features/customer/dashboard/DashboardPage'
 import MyEnquiriesPage from "../features/customer/enquiries/MyEnquiryPage";
 import EnquiryDetailsPage from "../features/customer/enquiries/EnquiryDetailsPage";
 import MyQuotationsPage from '../features/customer/quotations/MyQuotationsPage';
 import QuotationDetailsPage from '../features/customer/quotations/QuotationDetailsPage';
 import MyOrdersPage from '../features/customer/orders/MyOrdersPage'
 import OrderDetailsPage from '../features/customer/orders/OrderDetailsPage'
+import MyProfilePage from "../features/customer/profile/MyProfilePage";
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -58,7 +60,8 @@ export const router = createBrowserRouter([
         path: "/customer",
         element: <CustomerLayout />,
         children: [
-          { index: true, element: <PlaceholderPage title="Customer Dashboard" /> },
+          { index: true, element: <DashboardPage /> },
+          
           { path: "enquiries", element: <MyEnquiriesPage /> },
           { path: "enquiries/:id", element: <EnquiryDetailsPage /> },
 
@@ -69,11 +72,9 @@ export const router = createBrowserRouter([
           { path: 'orders/:id', element: <OrderDetailsPage /> },
 
           { path: "payments", element: <PlaceholderPage title="My Payments" /> },
-          {
-            path: "deliveries",
-            element: <PlaceholderPage title="My Deliveries" />,
-          },
-          { path: "profile", element: <PlaceholderPage title="My Profile" /> },
+          { path: "deliveries", element: <PlaceholderPage title="My Deliveries" />, },
+          
+          { path: "profile", element: <MyProfilePage /> },
         ],
       },
     ],

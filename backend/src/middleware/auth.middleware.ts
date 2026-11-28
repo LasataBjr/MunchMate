@@ -1,11 +1,10 @@
-//middleware that checks the token before allowing access to protected routes
-import type { RequestHandler } from "express"; //
+
+import type { RequestHandler } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
 import { db } from "../database/connection.js";
 
 export const requireAuth: RequestHandler = (req, res, next) => {
-  // Read JWT from the cookie
   const token = req.cookies?.token as string | undefined;
 
   if (!token) {
@@ -16,17 +15,19 @@ export const requireAuth: RequestHandler = (req, res, next) => {
   }
 
   try {
-    // Verify the JWT signature and expiration
     const decoded = jwt.verify(token, env.JWT_SECRET);
 
-    if ( typeof decoded === "string" || typeof decoded.userId !== "number" ) {
+    if (
+      typeof decoded === "string" ||
+      typeof decoded.userId !== "number" ||
+      typeof decoded.tokenVersion !== "number"
+    ) {
       return res.status(401).json({
         success: false,
         message: "Invalid authentication token",
       });
     }
 
-    // Check that the user still exists and is active
     const user = db.prepare(`
       SELECT
         users.id,
@@ -34,6 +35,7 @@ export const requireAuth: RequestHandler = (req, res, next) => {
         users.email,
         users.customer_id,
         users.is_active,
+        users.token_version,
         roles.name AS role
       FROM users
       JOIN roles ON users.role_id = roles.id
@@ -45,6 +47,7 @@ export const requireAuth: RequestHandler = (req, res, next) => {
           email: string;
           customer_id: number | null;
           is_active: number;
+          token_version: number;
           role: string;
         }
       | undefined;
@@ -56,7 +59,14 @@ export const requireAuth: RequestHandler = (req, res, next) => {
       });
     }
 
-    // Make authenticated user available to the route
+    // Check whether this JWT was issued before a session invalidation.
+    if (decoded.tokenVersion !== user.token_version) {
+      return res.status(401).json({
+        success: false,
+        message: "Your session has expired. Please log in again.",
+      });
+    }
+
     res.locals.authUser = {
       id: user.id,
       name: user.name,

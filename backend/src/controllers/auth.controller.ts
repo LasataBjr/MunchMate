@@ -35,6 +35,7 @@ export async function login(req: Request, res: Response) {
                 users.email,
                 users.password_hash,
                 users.is_active,
+                users.token_version,
                 roles.name AS role
             FROM users
             JOIN roles ON users.role_id = roles.id
@@ -46,6 +47,7 @@ export async function login(req: Request, res: Response) {
                 email: string;
                 password_hash: string;
                 is_active: number;
+                token_version: number;
                 role: string;
                 }
             | undefined;
@@ -70,24 +72,25 @@ export async function login(req: Request, res: Response) {
             
             // Create JWT token
             const token = jwt.sign(
-            {
-                userId: user.id,
-                role: user.role,
-            },
-            env.JWT_SECRET,
-            {
-                expiresIn: "1h",
-            }
+                {
+                    userId: user.id,
+                    role: user.role,
+                    tokenVersion: user.token_version,
+                },
+                env.JWT_SECRET,
+                {
+                    expiresIn: "1h",
+                }
             );
 
             // Store token in a secure HttpOnly cookie
             // HttpOnly cookie cannot be read by normal frontend JavaScript
             res.cookie("token", token, {
-            httpOnly: true,
-            secure: env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: 60 * 60 * 1000,
-            path: "/",
+                httpOnly: true,
+                secure: env.NODE_ENV === "production",
+                sameSite: "lax",
+                maxAge: 60 * 60 * 1000,
+                path: "/",
             });
         
             // Temporary success response

@@ -1,7 +1,7 @@
 import { useState, type FormEventHandler } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { isAxiosError } from 'axios'
-import { Info } from 'lucide-react'
+import { CheckCircle2, Info } from 'lucide-react'
 import AuthShell from '../../../components/layout/AuthShell'
 import MachineArt from '../../../components/common/MachineArt'
 
@@ -23,11 +23,15 @@ function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Only allow redirects back into the customer portal.
-  const previousLocation = (
-    location.state as {
-      from?: { pathname?: string; search?: string; hash?: string }
-    } | null
-  )?.from
+  type LoginLocationState = {
+    from?: { pathname?: string; search?: string; hash?: string }
+    message?: string
+  } | null;
+
+  const state = location.state as LoginLocationState
+  const previousLocation = state?.from;
+  const notice = typeof state?.message === 'string' ? state.message : null;
+
 
   const destination = previousLocation?.pathname?.startsWith('/customer')
     ? `${previousLocation.pathname}${previousLocation.search ?? ''}${previousLocation.hash ?? ''}`
@@ -80,7 +84,17 @@ function LoginPage() {
         Use your {siteInfo.name} customer account.
       </p>
 
-      {previousLocation && (
+      {notice && (
+        <div
+          role="status"
+          className="mt-6 flex items-start gap-3 rounded-lg border border-success-line bg-success-bg p-3 text-sm"
+        >
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true" />
+          <p className="text-fg">{notice}</p>
+        </div>
+      )}
+
+      {!notice && previousLocation && (
         <div className="mt-6 flex items-start gap-3 rounded-lg bg-surface-alt p-3 text-sm text-fg-muted">
           <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           <p>Please log in to continue.</p>
