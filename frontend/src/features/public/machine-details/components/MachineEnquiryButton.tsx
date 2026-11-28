@@ -1,14 +1,19 @@
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom'
+import { buttonStyles } from '../../../../components/ui/Button'
 
-function MachineEnquiryButton() {
+interface MachineEnquiryButtonProps {
+  machineId: number
+}
+
+function MachineEnquiryButton({ machineId }: MachineEnquiryButtonProps) {
   return (
     <Link
-      to="/login"
-      className="inline-flex items-center justify-center rounded-lg bg-brand-red px-6 py-3 font-medium text-white transition hover:bg-brand-dark"
+      to={`/enquiries/new?machineId=${machineId}`}
+      className={`${buttonStyles({ size: 'lg' })} w-full`}
     >
-      Login to Enquire
+      Request a quotation
     </Link>
-  );
+  )
 }
 
 export default MachineEnquiryButton;

@@ -12,6 +12,7 @@ export interface Machine {
   price_npr: number;
   currency: string;
   primary_image: string | null;
+  images?: MachineImage[];
 }
 
 export interface MachineCategory {
@@ -31,5 +32,13 @@ export interface CategoriesResponse {
   success: boolean;
   count: number;
   categories: MachineCategory[];
+}
+
+export interface MachineImage {
+  id: number
+  image_path: string
+  alt_text?: string | null
+  is_primary?: number | boolean
+  sort_order?: number
 }
 

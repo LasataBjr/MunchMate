@@ -41,9 +41,9 @@ function FeaturedMachines() {
       <Container>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Featured machines</h2>
+            <h2 className="text-3xl text-accent font-bold tracking-tight">Featured machines</h2>
             <p className="mt-2 text-fg-muted">
-              Explore some of our available vending machines.
+              Explore some of our available vending machines
             </p>
           </div>
 
