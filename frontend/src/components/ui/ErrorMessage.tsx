@@ -1,49 +1,37 @@
-
-import { AlertCircle, RefreshCw } from "lucide-react";
-import Button from "./Button";
+import type { ReactNode } from 'react'
+import { AlertCircle, RefreshCw } from 'lucide-react'
+import Button from './Button'
 
 type ErrorMessageProps = {
-  title?: string;
-  message?: string;
-  onRetry?: () => void;
-  retryLabel?: string;
-  className?: string;
-};
+  title?: string
+  message?: string
+  onRetry?: () => void
+  retryLabel?: string
+  className?: string
+  children?: ReactNode // extra content, e.g. a login link
+}
 
 function ErrorMessage({
-  title = "Something went wrong",
+  title = 'Something went wrong',
   message = "We couldn't complete your request. Please try again.",
   onRetry,
-  retryLabel = "Try Again",
-  className = "",
+  retryLabel = 'Try again',
+  className = '',
+  children,
 }: ErrorMessageProps) {
   return (
-    <div
-      role="alert"
-      className={`rounded-xl border border-red-200 bg-red-50 p-5 ${className}`}
-    >
+    <div role="alert" className={`rounded-xl border border-danger-line bg-danger-bg p-5 ${className}`}>
       <div className="flex items-start gap-3">
-        <AlertCircle
-          className="mt-0.5 h-5 w-5 shrink-0 text-red-600"
-          aria-hidden="true"
-        />
+        <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-danger" aria-hidden="true" />
 
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-red-800">
-            {title}
-          </h3>
+          <h3 className="font-semibold text-danger">{title}</h3>
+          <p className="mt-1 text-sm leading-6 text-fg-muted">{message}</p>
 
-          <p className="mt-1 text-sm leading-6 text-red-700">
-            {message}
-          </p>
+          {children && <div className="mt-3 text-sm">{children}</div>}
 
           {onRetry && (
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={onRetry}
-              className="mt-4"
-            >
+            <Button variant="secondary" size="sm" onClick={onRetry} className="mt-4">
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
               {retryLabel}
             </Button>
@@ -51,7 +39,7 @@ function ErrorMessage({
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 export default ErrorMessage;
